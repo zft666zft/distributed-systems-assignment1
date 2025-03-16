@@ -1,36 +1,59 @@
 import * as cdk from "aws-cdk-lib";
-import { Construct } from "constructs";
+import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as custom from "aws-cdk-lib/custom-resources";
+import { Construct } from "constructs";
 import { generateBatch } from "../shared/util";
 import { beverages, beverageIngredients } from "../seed/beverages";
+import * as apig from "aws-cdk-lib/aws-apigateway";
 
-export class BeverageRestApiStack extends cdk.Stack {
+export class DistributedSystemsAssignment1Stack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    // Table 1: Beverages
+    // Tables
     const beveragesTable = new dynamodb.Table(this, "BeveragesTable", {
-      tableName: "Beverages",
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
       removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "Beverages",
     });
 
-    // Table 2: BeverageIngredients
-    const beverageIngredientsTable = new dynamodb.Table(
-      this,
-      "BeverageIngredientsTable",
-      {
-        tableName: "BeverageIngredients",
-        billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
-        partitionKey: { name: "beverageId", type: dynamodb.AttributeType.NUMBER },
-        sortKey: { name: "ingredientName", type: dynamodb.AttributeType.STRING },
-        removalPolicy: cdk.RemovalPolicy.DESTROY,
-      }
-    );
+    const beverageIngredientsTable = new dynamodb.Table(this, "BeverageIngredientsTable", {
+      billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
+      partitionKey: { name: "beverageId", type: dynamodb.AttributeType.NUMBER },
+      sortKey: { name: "ingredientName", type: dynamodb.AttributeType.STRING },
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      tableName: "BeverageIngredients",
+    });
 
-    
+    // Functions
+    const getAllBeveragesFn = new lambdanode.NodejsFunction(this, "GetAllBeveragesFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: `${__dirname}/../lambdas/getAllBeverages.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: "Beverages",
+        REGION: "eu-west-1",
+      },
+    });
+
+    const addBeverageFn = new lambdanode.NodejsFunction(this, "AddBeverageFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: `${__dirname}/../lambdas/addBeverage.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: "Beverages",
+        REGION: "eu-west-1",
+      },
+    });
+
+    // Seed initial data into the tables
     new custom.AwsCustomResource(this, "BeveragesInitData", {
       onCreate: {
         service: "DynamoDB",
@@ -48,6 +71,37 @@ export class BeverageRestApiStack extends cdk.Stack {
       }),
     });
 
+    // Permissions
+    beveragesTable.grantReadData(getAllBeveragesFn);
+    beveragesTable.grantReadWriteData(addBeverageFn);
 
+    // REST API
+    const api = new apig.RestApi(this, "RestAPI", {
+      description: "Beverage API",
+      deployOptions: {
+        stageName: "dev",
+      },
+      defaultCorsPreflightOptions: {
+        allowHeaders: ["Content-Type", "X-Amz-Date"],
+        allowMethods: ["OPTIONS", "GET", "POST", "PUT", "PATCH", "DELETE"],
+        allowCredentials: true,
+        allowOrigins: ["*"],
+      },
+    });
+
+    // Beverages API Endpoints
+    const beveragesEndpoint = api.root.addResource("beverages");
+
+    // GET /beverages
+    beveragesEndpoint.addMethod(
+      "GET",
+      new apig.LambdaIntegration(getAllBeveragesFn, { proxy: true })
+    );
+
+    // POST /beverages
+    beveragesEndpoint.addMethod(
+      "POST",
+      new apig.LambdaIntegration(addBeverageFn, { proxy: true })
+    );
   }
 }
