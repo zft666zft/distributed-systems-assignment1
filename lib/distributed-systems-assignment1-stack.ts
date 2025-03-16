@@ -83,6 +83,19 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
       },
     });
 
+    // Update beverage
+    const updateBeverageFn = new lambdanode.NodejsFunction(this, "UpdateBeverageFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: `${__dirname}/../lambdas/updateBeverage.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: beveragesTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+
     // Seed initial data into the tables
     new custom.AwsCustomResource(this, "BeveragesInitData", {
       onCreate: {
@@ -106,6 +119,7 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     beveragesTable.grantReadWriteData(addBeverageFn);
     beveragesTable.grantReadData(getBeverageByIdFn);
     beverageIngredientsTable.grantReadData(getBeverageIngredientFn);
+    beveragesTable.grantReadWriteData(updateBeverageFn);
 
     // API Gateway
     const api = new apig.RestApi(this, "RestAPI", {
@@ -139,6 +153,10 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     beverageEndpoint.addMethod(
       "GET",
       new apig.LambdaIntegration(getBeverageByIdFn, { proxy: true })
+    );
+    beverageEndpoint.addMethod(
+      "PUT",
+      new apig.LambdaIntegration(updateBeverageFn, { proxy: true })
     );
 
     const beverageIngredientEndpoint = beveragesEndpoint.addResource("ingredients"); 
