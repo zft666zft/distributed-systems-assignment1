@@ -8,6 +8,7 @@ export const beverages: Beverage[] = [
     description: "A sweet carbonated beverage by The Coca-Cola Company.",
     price: 1.5,
     isActive: true,
+    
   },
   {
     id: 1002,
