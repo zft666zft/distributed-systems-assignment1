@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib';
-import { DistributedSystemsAssignment1Stack } from '../lib/distributed systems - assignment 1-stack';
+import { DistributedSystemsAssignment1Stack } from '../lib/distributed-systems-assignment1-stack';
 
 const app = new cdk.App();
 new DistributedSystemsAssignment1Stack(app, 'DistributedSystemsAssignment1Stack', {
