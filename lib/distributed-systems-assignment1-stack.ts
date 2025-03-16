@@ -7,7 +7,6 @@ import { Construct } from "constructs";
 import { generateBatch } from "../shared/util";
 import { beverages, beverageIngredients } from "../seed/beverages";
 import * as apig from "aws-cdk-lib/aws-apigateway";
-import * as iam from "aws-cdk-lib/aws-iam"; 
 
 
 export class DistributedSystemsAssignment1Stack extends cdk.Stack {
@@ -19,7 +18,6 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     const beveragesTable = new dynamodb.Table(this, "BeveragesTable", {
       billingMode: dynamodb.BillingMode.PAY_PER_REQUEST,
       partitionKey: { name: "id", type: dynamodb.AttributeType.NUMBER },
-      sortKey: { name: "name", type: dynamodb.AttributeType.STRING }, 
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       tableName: "Beverages",
     });
@@ -98,7 +96,6 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
       },
     });
 
-  
 
     // Seed initial data into the tables
     new custom.AwsCustomResource(this, "BeveragesInitData", {
@@ -124,8 +121,6 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     beveragesTable.grantReadData(getBeverageByIdFn);
     beverageIngredientsTable.grantReadData(getBeverageIngredientFn);
     beveragesTable.grantReadWriteData(updateBeverageFn);
- 
-    
 
     // API Gateway
     const api = new apig.RestApi(this, "RestAPI", {
