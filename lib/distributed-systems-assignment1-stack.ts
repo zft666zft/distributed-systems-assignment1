@@ -114,7 +114,12 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     getBeverageTranslatedFn.addToRolePolicy(
       new iam.PolicyStatement({
         effect: iam.Effect.ALLOW,
-        actions: ["translate:TranslateText", "dynamodb:GetItem"],
+        actions: [
+          "translate:TranslateText",
+          "dynamodb:GetItem",
+          "dynamodb:UpdateItem",
+          "comprehend:DetectDominantLanguage"
+        ],
         resources: ["*"],  
       })
     );
