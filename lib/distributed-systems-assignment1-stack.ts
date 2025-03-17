@@ -180,7 +180,10 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     // POST /beverages
     beveragesEndpoint.addMethod(
       "POST",
-      new apig.LambdaIntegration(addBeverageFn, { proxy: true })
+      new apig.LambdaIntegration(addBeverageFn, { proxy: true }),
+      {
+        authorizationType: apig.AuthorizationType.IAM,  // Authorization
+      }
     );
 
     const beverageEndpoint = beveragesEndpoint.addResource("{beverageId}");
@@ -191,7 +194,10 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     );
     beverageEndpoint.addMethod(
       "PUT",
-      new apig.LambdaIntegration(updateBeverageFn, { proxy: true })
+      new apig.LambdaIntegration(updateBeverageFn, { proxy: true }),
+      {
+        authorizationType: apig.AuthorizationType.IAM,  // Authorization
+      }
     );
 
     const beverageIngredientEndpoint = beveragesEndpoint.addResource("ingredients"); 
