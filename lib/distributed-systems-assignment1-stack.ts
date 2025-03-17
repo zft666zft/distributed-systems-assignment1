@@ -2,6 +2,7 @@ import * as cdk from "aws-cdk-lib";
 import * as lambdanode from "aws-cdk-lib/aws-lambda-nodejs";
 import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
+import * as iam from "aws-cdk-lib/aws-iam";
 import * as custom from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
 import { generateBatch } from "../shared/util";
@@ -96,6 +97,32 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
       },
     });
 
+    // Get beverage translation
+    const getBeverageTranslatedFn = new lambdanode.NodejsFunction(this, "GetBeverageTranslationFn", {
+      architecture: lambda.Architecture.ARM_64,
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: `${__dirname}/../lambdas/getBeverageTranslation.ts`,
+      timeout: cdk.Duration.seconds(10),
+      memorySize: 128,
+      environment: {
+        TABLE_NAME: beveragesTable.tableName,
+        REGION: "eu-west-1",
+      },
+    });
+    
+
+    getBeverageTranslatedFn.addToRolePolicy(
+      new iam.PolicyStatement({
+        effect: iam.Effect.ALLOW,
+        actions: ["translate:TranslateText", "dynamodb:GetItem"],
+        resources: ["*"],  
+      })
+    );
+    
+  
+  
+
+    
 
     // Seed initial data into the tables
     new custom.AwsCustomResource(this, "BeveragesInitData", {
@@ -121,6 +148,8 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
     beveragesTable.grantReadData(getBeverageByIdFn);
     beverageIngredientsTable.grantReadData(getBeverageIngredientFn);
     beveragesTable.grantReadWriteData(updateBeverageFn);
+    beveragesTable.grantReadData(getBeverageTranslatedFn);
+
 
     // API Gateway
     const api = new apig.RestApi(this, "RestAPI", {
@@ -166,6 +195,17 @@ export class DistributedSystemsAssignment1Stack extends cdk.Stack {
       "GET",
       new apig.LambdaIntegration(getBeverageIngredientFn, { proxy: true })
     );
+
+    const beverageTranslatedEndpoint = beverageEndpoint.addResource("translate");
+    beverageTranslatedEndpoint.addMethod(
+      "GET",
+     new apig.LambdaIntegration(getBeverageTranslatedFn, { proxy: true }),
+    {
+      authorizationType: apig.AuthorizationType.NONE,  // Make it publicly accessible
+    }
+    );
+
+
 
 
   }

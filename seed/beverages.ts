@@ -8,7 +8,7 @@ export const beverages: Beverage[] = [
     description: "A sweet carbonated beverage by The Coca-Cola Company.",
     price: 1.5,
     isActive: true,
-    
+    translations: {} // Add empty translation object for caching
   },
   {
     id: 1002,
@@ -17,6 +17,7 @@ export const beverages: Beverage[] = [
     description: "A soothing hot beverage made from Camellia sinensis leaves.",
     price: 2.0,
     isActive: true,
+    translations: {}
   },
   {
     id: 1003,
@@ -25,6 +26,7 @@ export const beverages: Beverage[] = [
     description: "A style of coffee prepared by brewing espresso with hot water.",
     price: 2.5,
     isActive: true,
+    translations: {}
   },
   {
     id: 1004,
@@ -33,6 +35,7 @@ export const beverages: Beverage[] = [
     description: "Freshly squeezed orange juice with no added sugar.",
     price: 3.0,
     isActive: false,
+    translations: {}
   },
 ];
 
