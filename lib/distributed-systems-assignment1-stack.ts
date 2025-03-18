@@ -8,6 +8,8 @@ import { Construct } from "constructs";
 import { generateBatch } from "../shared/util";
 import { beverages, beverageIngredients } from "../seed/beverages";
 import * as apig from "aws-cdk-lib/aws-apigateway";
+import { LambdaConstruct } from "../constructs/LambdaConstruct";
+
 
 
 export class DistributedSystemsAssignment1Stack extends cdk.Stack {
