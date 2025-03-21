@@ -1,14 +1,103 @@
-# Welcome to your CDK TypeScript project
+## Serverless REST Assignment - Distributed Systems.
 
-This is a blank project for CDK development with TypeScript.
+__Name:__ Futong Zhu
 
-The `cdk.json` file tells the CDK Toolkit how to execute your app.
+__Demo:__ [... link to  YouTube video demonstration ......](https://youtu.be/T_zpP0bgn7A)
 
-## Useful commands
+### Context.
 
-* `npm run build`   compile typescript to js
-* `npm run watch`   watch for changes and compile
-* `npm run test`    perform the jest unit tests
-* `npx cdk deploy`  deploy this stack to your default AWS account/region
-* `npx cdk diff`    compare deployed stack with current state
-* `npx cdk synth`   emits the synthesized CloudFormation template
+Context: Beverage 
+
+Table item attributes:
++ `id` - number (Partition Key)  
++ `name` - string (Sort Key)  
++ `isCarbonated` - boolean  
++ `description` - string  
++ `price` - number  
++ `isActive` - boolean  
++ `translations` - object 
+ 
+Context: Beverage Ingredients
+
+Table item attributes:
++ `beverageId` - number (Partition Key)  
++ `ingredientName` - string (Sort Key)  
++ `quantity` - string  
++ `notes` - string  
+ 
+
+### App API endpoints.
+
+
++ POST /beverages
+ Add a new beverage item to the catalog. Requires IAM authorization.
++ GET /beverages
+Retrieve all beverage items in the catalog.
++ GET /beverages/{beverageId}
+Retrieve a specific beverage by its beverageId.
++ PUT /beverages/{beverageId}
+Update details of a beverage by its beverageId. Requires IAM authorization.
++ GET /beverages/ingredients?beverageId={id}
+Retrieve all ingredients associated with a specific beverage ID.
++ GET /beverages/{beverageId}/translate?language={langCode}
+Translate the description field of a beverage to a specified language (e.g., fr, zh, de, etc.). Cached in DynamoDB.
+
+
+
+### Features.
+
+#### Translation persistence 
+
+We implemented translation persistence using AWS Translate and DynamoDB. When a client requests a translation of a beverage description to a target language (e.g., fr, zh, de), the system will check if a cached translation already exists in the translations field of the beverage item.If not found, it translates using AWS Translate and persists the result back into the translations map within the item.
+
+**Structure of a translated beverage item:**
+
++ id - number (Partition Key)
++ name - string (Sort Key)
++ isCarbonated - boolean
++ description - string
++ price - number
++ isActive - boolean
++ translations - map<string, string>
+
+  Example:  
+  ```json
+  {
+    "fr": "Eau gazeuse",
+    "de": "Sprudelwasser",
+    "zh": "苏打水"
+  }
+  ```
+
+#### Custom L2 Construct (if completed)
+
+A reusable **LambdaConstruct** was implemented to streamline the creation of Lambda functions. This custom L2 construct standardizes common configuration parameters, including runtime, handler path, environment variables, and source code location.
+
+**Construct Input props object:**
+~~~ts
+export interface LambdaConstructProps {
+  functionName: string;
+  handler: string;
+  environment?: { [key: string]: string };
+}
+~~~
+
+**Construct public properties:**
+~~~ts
+export class LambdaConstruct extends Construct {
+  public readonly lambdaFunction: lambda.Function;
+
+  constructor(scope: Construct, id: string, props: LambdaConstructProps) {
+    ...
+  }
+}
+~~~
+
+
+
+
+
+
+
+
+
