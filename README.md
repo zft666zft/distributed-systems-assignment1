@@ -2,7 +2,7 @@
 
 __Name:__ Futong Zhu
 
-__Demo:__ [... link to  YouTube video demonstration ......](https://youtu.be/T_zpP0bgn7A)
+__Demo:__ [link to  YouTube video demonstration](https://youtu.be/T_zpP0bgn7A)
 
 ### Context.
 
